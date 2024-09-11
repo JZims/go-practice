@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
-const url string = "http://services.explorecalifornia.org/json/packages.php"
+const url string = "http://services.explorecalifornia.org/json/tours.php"
 
 func main() {
 
@@ -31,7 +33,12 @@ func main() {
 
 	content := string(bytes)
 
-	fmt.Print(content)
+	// fmt.Print(content)
+
+	tours := ToursFromJson(content)
+	for _, tour := range tours {
+		fmt.Println(tour.Name)
+	}
 
 }
 
@@ -39,4 +46,25 @@ func checkError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// Converts incoming JSON data into a Tours map
+func ToursFromJson(content string) []Tour {
+	tours := make([]Tour, 0, 20)
+
+	decoder := json.NewDecoder(strings.NewReader(content))
+	_, err := decoder.Token()
+	checkError(err)
+
+	var tour Tour
+	for decoder.More() {
+		err := decoder.Decode(&tour)
+		checkError(err)
+		tours = append(tours, tour)
+	}
+	return tours
+}
+
+type Tour struct {
+	Name, Price string
 }
